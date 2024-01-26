@@ -26,7 +26,7 @@ export default function Footer() {
                         <div className='footer-logo-text'>{'Re Board'}</div>
                     </div>
                     <div className='footer-link-box'>
-                        <div className='footer-email-link'>{'email@email.com'}</div>
+                        <div className='footer-email-link'>{'qscesz1346@kakao.com'}</div>
                         <div className='icon-button' onClick={onInstaIconButtonClickHandler}>
                             <div className='icon insta-icon'></div>
                         </div>
