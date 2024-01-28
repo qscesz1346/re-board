@@ -6,12 +6,14 @@ import java.util.*;
 
 import com.re.boardback.dto.request.board.PostBoardRequestDto;
 import com.re.boardback.dto.response.ResponseDto;
+import com.re.boardback.dto.response.board.GetBoardResponseDto;
 import com.re.boardback.dto.response.board.PostBoardResponseDto;
 import com.re.boardback.entity.BoardEntity;
 import com.re.boardback.entity.ImageEntity;
 import com.re.boardback.repository.BoardRepository;
 import com.re.boardback.repository.ImageRepository;
 import com.re.boardback.repository.UserRepository;
+import com.re.boardback.repository.resultSet.GetBoardResultSet;
 import com.re.boardback.service.BoardService;
 
 import lombok.RequiredArgsConstructor;
@@ -23,6 +25,32 @@ public class BoardServiceImplement implements BoardService {
     private final UserRepository userRepository;
     private final BoardRepository boardRepository;
     private final ImageRepository imageRepository;
+
+    @Override
+    public ResponseEntity<? super GetBoardResponseDto> getBoard(Integer boardNumber) {
+
+        GetBoardResultSet resultSet = null;
+        List<ImageEntity> imageEntities = new ArrayList<>();
+        
+        try {
+
+            resultSet = boardRepository.getBoard(boardNumber);
+            if (resultSet == null) return GetBoardResponseDto.noExistBoard();
+
+            imageEntities = imageRepository.findByBoardNumber(boardNumber);
+
+            BoardEntity boardEntity = boardRepository.findByBoardNumber(boardNumber);
+            boardEntity.increaseViewCount();
+            boardRepository.save(boardEntity);
+            
+        } catch (Exception exception) {
+            exception.printStackTrace();
+            return ResponseDto.databaseError();
+        }
+
+        return GetBoardResponseDto.success(resultSet, imageEntities);
+
+    }
     
     @Override
     public ResponseEntity<? super PostBoardResponseDto> postBoard(PostBoardRequestDto dto, String email) {
