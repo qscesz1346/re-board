@@ -5,15 +5,26 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 
 import com.re.boardback.dto.request.board.PostBoardRequestDto;
+import com.re.boardback.dto.request.board.PostCommentRequestDto;
 import com.re.boardback.dto.response.ResponseDto;
 import com.re.boardback.dto.response.board.GetBoardResponseDto;
+import com.re.boardback.dto.response.board.GetCommentListResponseDto;
+import com.re.boardback.dto.response.board.GetFavoriteListResponseDto;
 import com.re.boardback.dto.response.board.PostBoardResponseDto;
+import com.re.boardback.dto.response.board.PostCommentResponseDto;
+import com.re.boardback.dto.response.board.PutFavoriteResponseDto;
 import com.re.boardback.entity.BoardEntity;
+import com.re.boardback.entity.CommentEntity;
+import com.re.boardback.entity.FavoriteEntity;
 import com.re.boardback.entity.ImageEntity;
 import com.re.boardback.repository.BoardRepository;
+import com.re.boardback.repository.CommentRepository;
+import com.re.boardback.repository.FavoriteRepository;
 import com.re.boardback.repository.ImageRepository;
 import com.re.boardback.repository.UserRepository;
 import com.re.boardback.repository.resultSet.GetBoardResultSet;
+import com.re.boardback.repository.resultSet.GetCommentListResultSet;
+import com.re.boardback.repository.resultSet.GetFavoriteListResultSet;
 import com.re.boardback.service.BoardService;
 
 import lombok.RequiredArgsConstructor;
@@ -25,6 +36,8 @@ public class BoardServiceImplement implements BoardService {
     private final UserRepository userRepository;
     private final BoardRepository boardRepository;
     private final ImageRepository imageRepository;
+    private final FavoriteRepository favoriteRepository;
+    private final CommentRepository commentRepository;
 
     @Override
     public ResponseEntity<? super GetBoardResponseDto> getBoard(Integer boardNumber) {
@@ -53,6 +66,48 @@ public class BoardServiceImplement implements BoardService {
     }
     
     @Override
+    public ResponseEntity<? super GetFavoriteListResponseDto> getFavoriteList(Integer boardNumber) {
+        
+        List<GetFavoriteListResultSet> resultSets = new ArrayList<>();
+
+        try {
+
+            boolean existedBoard = boardRepository.existsByBoardNumber(boardNumber);
+            if (!existedBoard) return GetFavoriteListResponseDto.noExistBoard();
+
+            resultSets = favoriteRepository.getFavoriteList(boardNumber);
+            
+        } catch (Exception exception) {
+            exception.printStackTrace();
+            return ResponseDto.databaseError();
+        }
+
+        return GetFavoriteListResponseDto.success(resultSets);
+        
+    }
+    
+    @Override
+    public ResponseEntity<? super GetCommentListResponseDto> getCommentList(Integer boardNumber) {
+        
+        List<GetCommentListResultSet> resultSets = new ArrayList<>();
+
+        try {
+
+            boolean existedBoard = boardRepository.existsByBoardNumber(boardNumber);
+            if (!existedBoard) return GetCommentListResponseDto.noExistBoard();
+
+            resultSets = commentRepository.getCommentList(boardNumber);
+            
+        } catch (Exception exception) {
+            exception.printStackTrace();
+            return ResponseDto.databaseError();
+        }
+
+        return GetCommentListResponseDto.success(resultSets);
+
+    }
+
+    @Override
     public ResponseEntity<? super PostBoardResponseDto> postBoard(PostBoardRequestDto dto, String email) {
         
         try {
@@ -80,6 +135,64 @@ public class BoardServiceImplement implements BoardService {
         }
 
         return PostBoardResponseDto.success();
+
+    }
+
+    @Override
+    public ResponseEntity<? super PostCommentResponseDto> postComment(PostCommentRequestDto dto, Integer boardNumber, String email) {
+        
+        try {
+
+            BoardEntity boardEntity = boardRepository.findByBoardNumber(boardNumber);
+            if (boardEntity == null) return PostCommentResponseDto.noExistBoard();
+
+            boolean existedUser = userRepository.existsByEmail(email);
+            if (!existedUser) return PostCommentResponseDto.noExistUser();
+
+            CommentEntity commentEntity = new CommentEntity(dto, boardNumber, email);
+            commentRepository.save(commentEntity);
+
+            boardEntity.increaseCommentCount();
+            boardRepository.save(boardEntity);
+            
+        } catch (Exception exception) {
+            exception.printStackTrace();
+            return ResponseDto.databaseError();
+        }
+
+        return PostCommentResponseDto.success();
+
+    }
+
+    @Override
+    public ResponseEntity<? super PutFavoriteResponseDto> putFavorite(Integer boardNumber, String email) {
+        
+        try {
+
+            boolean existedUser = userRepository.existsByEmail(email);
+            if (!existedUser) return PutFavoriteResponseDto.noExistUser();
+
+            BoardEntity boardEntity = boardRepository.findByBoardNumber(boardNumber);
+            if (boardEntity == null) return PutFavoriteResponseDto.noExistBoard();
+
+            FavoriteEntity favoriteEntity = favoriteRepository.findByBoardNumberAndUserEmail(boardNumber, email);
+            if (favoriteEntity == null) {
+                favoriteEntity = new FavoriteEntity(email, boardNumber);
+                favoriteRepository.save(favoriteEntity);
+                boardEntity.increaseFavoriteCount();
+            } else {
+                favoriteRepository.delete(favoriteEntity);
+                boardEntity.decreaseFavoriteCount();
+            }
+
+            boardRepository.save(boardEntity);
+            
+        } catch (Exception exception) {
+            exception.printStackTrace();
+            return PutFavoriteResponseDto.databaseError();
+        }
+
+        return PutFavoriteResponseDto.success();
 
     }
     
