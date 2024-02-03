@@ -5,7 +5,12 @@ import org.springframework.stereotype.Repository;
 
 import com.re.boardback.entity.BoardListViewEntity;
 
+import java.util.*;
+
 @Repository
 public interface BoardListViewRepository extends JpaRepository<BoardListViewEntity, Integer> {
+
+    List<BoardListViewEntity> findByOrderByWriteDatetimeDesc();
+    List<BoardListViewEntity> findTop3ByWriteDatetimeGreaterThanOrderByFavoriteCountDescCommentCountDescViewCountDescWriteDatetimeDesc(String writeDatetime);
     
 }

@@ -12,13 +12,17 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.re.boardback.dto.request.board.PatchBoardRequestDto;
 import com.re.boardback.dto.request.board.PostBoardRequestDto;
 import com.re.boardback.dto.request.board.PostCommentRequestDto;
 import com.re.boardback.dto.response.board.DeleteBoardResponseDto;
 import com.re.boardback.dto.response.board.GetBoardResponseDto;
 import com.re.boardback.dto.response.board.GetCommentListResponseDto;
 import com.re.boardback.dto.response.board.GetFavoriteListResponseDto;
+import com.re.boardback.dto.response.board.GetLatestBoardListResponseDto;
+import com.re.boardback.dto.response.board.GetTop3BoardListResponseDto;
 import com.re.boardback.dto.response.board.IncreaseViewCountResponseDto;
+import com.re.boardback.dto.response.board.PatchBoardResponseDto;
 import com.re.boardback.dto.response.board.PostBoardResponseDto;
 import com.re.boardback.dto.response.board.PostCommentResponseDto;
 import com.re.boardback.dto.response.board.PutFavoriteResponseDto;
@@ -66,6 +70,18 @@ public class BoardController {
         return response;
     }
 
+    @GetMapping("/latest-list")
+    public ResponseEntity<? super GetLatestBoardListResponseDto> getLatestBoardList() {
+        ResponseEntity<? super GetLatestBoardListResponseDto> response = boardService.getLatestBoardList();
+        return response;
+    }
+
+    @GetMapping("/top-3")
+    public ResponseEntity<? super GetTop3BoardListResponseDto> getTop3BoardList() {
+        ResponseEntity<? super GetTop3BoardListResponseDto> response = boardService.getTop3BoardList();
+        return response;
+    }
+
     @PostMapping("")
     public ResponseEntity<? super PostBoardResponseDto> postBoard(
         @RequestBody @Valid PostBoardRequestDto requestBody,
@@ -91,6 +107,16 @@ public class BoardController {
         @AuthenticationPrincipal String email
     ) {
         ResponseEntity<? super PutFavoriteResponseDto> response = boardService.putFavorite(boardNumber, email);
+        return response;
+    }
+
+    @PatchMapping("/{boardNumber}")
+    public ResponseEntity<? super PatchBoardResponseDto> patchBoard(
+        @RequestBody @Valid PatchBoardRequestDto requestBody,
+        @PathVariable("boardNumber") Integer boardNumber,
+        @AuthenticationPrincipal String email
+    ) {
+        ResponseEntity<? super PatchBoardResponseDto> response = boardService.patchBoard(requestBody, boardNumber, email);
         return response;
     }
 

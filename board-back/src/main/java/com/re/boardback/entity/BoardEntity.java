@@ -3,6 +3,8 @@ package com.re.boardback.entity;
 import java.util.Date;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
+
+import com.re.boardback.dto.request.board.PatchBoardRequestDto;
 import com.re.boardback.dto.request.board.PostBoardRequestDto;
 
 import jakarta.persistence.*;
@@ -54,6 +56,11 @@ public class BoardEntity {
 
     public void decreaseFavoriteCount() {
         this.favoriteCount--;
+    }
+
+    public void patchBoard(PatchBoardRequestDto dto) {
+        this.title = dto.getTitle();
+        this.content = dto.getContent();
     }
 
 }
