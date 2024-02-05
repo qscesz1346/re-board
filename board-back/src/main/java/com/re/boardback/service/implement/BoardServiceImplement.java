@@ -16,7 +16,9 @@ import com.re.boardback.dto.response.board.GetBoardResponseDto;
 import com.re.boardback.dto.response.board.GetCommentListResponseDto;
 import com.re.boardback.dto.response.board.GetFavoriteListResponseDto;
 import com.re.boardback.dto.response.board.GetLatestBoardListResponseDto;
+import com.re.boardback.dto.response.board.GetSearchBoardListResponseDto;
 import com.re.boardback.dto.response.board.GetTop3BoardListResponseDto;
+import com.re.boardback.dto.response.board.GetUserBoardListResponseDto;
 import com.re.boardback.dto.response.board.IncreaseViewCountResponseDto;
 import com.re.boardback.dto.response.board.PatchBoardResponseDto;
 import com.re.boardback.dto.response.board.PostBoardResponseDto;
@@ -27,11 +29,13 @@ import com.re.boardback.entity.BoardListViewEntity;
 import com.re.boardback.entity.CommentEntity;
 import com.re.boardback.entity.FavoriteEntity;
 import com.re.boardback.entity.ImageEntity;
+import com.re.boardback.entity.SearchLogEntity;
 import com.re.boardback.repository.BoardListViewRepository;
 import com.re.boardback.repository.BoardRepository;
 import com.re.boardback.repository.CommentRepository;
 import com.re.boardback.repository.FavoriteRepository;
 import com.re.boardback.repository.ImageRepository;
+import com.re.boardback.repository.SearchLogRepository;
 import com.re.boardback.repository.UserRepository;
 import com.re.boardback.repository.resultSet.GetBoardResultSet;
 import com.re.boardback.repository.resultSet.GetCommentListResultSet;
@@ -47,8 +51,9 @@ public class BoardServiceImplement implements BoardService {
     private final UserRepository userRepository;
     private final BoardRepository boardRepository;
     private final ImageRepository imageRepository;
-    private final FavoriteRepository favoriteRepository;
     private final CommentRepository commentRepository;
+    private final FavoriteRepository favoriteRepository;
+    private final SearchLogRepository searchLogRepository;
     private final BoardListViewRepository boardListViewRepository;
 
     @Override
@@ -152,6 +157,54 @@ public class BoardServiceImplement implements BoardService {
         }
 
         return GetTop3BoardListResponseDto.success(boardListViewEntities);
+
+    }
+
+    @Override
+    public ResponseEntity<? super GetSearchBoardListResponseDto> getSearchBoardList(String searchWord, String preSearchWord) {
+        
+        List<BoardListViewEntity> boardListViewEntities = new ArrayList<>();
+
+        try {
+
+            boardListViewEntities = boardListViewRepository.findByTitleContainsOrContentContainsOrderByWriteDatetimeDesc(searchWord, searchWord);
+            
+            SearchLogEntity searchLogEntity = new SearchLogEntity(searchWord, preSearchWord, false);
+            searchLogRepository.save(searchLogEntity);
+            
+            boolean relation = preSearchWord != null;
+            if (relation) {
+                searchLogEntity = new SearchLogEntity(preSearchWord, searchWord, relation);
+                searchLogRepository.save(searchLogEntity);
+            }            
+            
+        } catch (Exception exception) {
+            exception.printStackTrace();
+            return ResponseDto.databaseError();
+        }
+
+        return GetSearchBoardListResponseDto.success(boardListViewEntities);
+
+    }
+
+    @Override
+    public ResponseEntity<? super GetUserBoardListResponseDto> getUserBoardList(String email) {
+
+        List<BoardListViewEntity> boardListViewEntities = new ArrayList<>();
+        
+        try {
+
+            boolean existedUser = userRepository.existsByEmail(email);
+            if (!existedUser) return GetUserBoardListResponseDto.noExistUser();
+
+            boardListViewEntities = boardListViewRepository.findByWriterEmailOrderByWriteDatetimeDesc(email);
+            
+        } catch (Exception exception) {
+            exception.printStackTrace();
+            return ResponseDto.databaseError();
+        }
+
+        return GetUserBoardListResponseDto.success(boardListViewEntities);
 
     }
 
