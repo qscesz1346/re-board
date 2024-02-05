@@ -1,6 +1,6 @@
 #search-wrapper {
-    min-height: calc(100vh - 304px);
     padding: 40px 0;
+    min-height: calc(100vh - 304px);
 
     display: flex;
     justify-content: center;
